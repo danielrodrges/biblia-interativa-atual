@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 
 export default function BibleApp() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -15,6 +16,7 @@ export default function BibleApp() {
   const [secondLanguage, setSecondLanguage] = useState("en");
   const [showSettings, setShowSettings] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [portugueseOnly, setPortugueseOnly] = useState(false);
   
   // Audiobook states
   const [audioLanguage, setAudioLanguage] = useState("pt");
@@ -64,6 +66,15 @@ export default function BibleApp() {
   };
 
   const goalPercentage = Math.min((currentDays / goalDays) * 100, 100);
+
+  // Helper function para obter texto da Bíblia
+  const getBibleText = (language: string): string => {
+    if (language === "pt") {
+      return bibleText.pt[ptTranslation as keyof typeof bibleText.pt];
+    }
+    const text = bibleText[language as keyof typeof bibleText];
+    return typeof text === 'string' ? text : bibleText.pt[ptTranslation as keyof typeof bibleText.pt];
+  };
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`} style={{ backgroundColor: "#F0F4F8" }}>
@@ -248,6 +259,22 @@ export default function BibleApp() {
                     <h3 className="text-2xl font-bold mb-6" style={{ color: "#333333" }}>Configurações</h3>
 
                     <div className="space-y-6">
+                      {/* Modo Somente Português */}
+                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+                        <div className="flex-1">
+                          <label className="text-sm font-semibold block mb-1" style={{ color: "#333333" }}>
+                            Somente Português
+                          </label>
+                          <p className="text-xs text-gray-600">
+                            Expande o texto em português para tela cheia
+                          </p>
+                        </div>
+                        <Switch
+                          checked={portugueseOnly}
+                          onCheckedChange={setPortugueseOnly}
+                        />
+                      </div>
+
                       <div>
                         <label className="text-sm font-semibold mb-3 block" style={{ color: "#333333" }}>Tradução em Português</label>
                         <Select value={ptTranslation} onValueChange={setPtTranslation}>
@@ -264,20 +291,22 @@ export default function BibleApp() {
                         </Select>
                       </div>
 
-                      <div>
-                        <label className="text-sm font-semibold mb-3 block" style={{ color: "#333333" }}>Segundo Idioma</label>
-                        <Select value={secondLanguage} onValueChange={setSecondLanguage}>
-                          <SelectTrigger className="rounded-xl h-12 border-gray-200">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="es">Español</SelectItem>
-                            <SelectItem value="it">Italiano</SelectItem>
-                            <SelectItem value="fr">Français</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {!portugueseOnly && (
+                        <div>
+                          <label className="text-sm font-semibold mb-3 block" style={{ color: "#333333" }}>Segundo Idioma</label>
+                          <Select value={secondLanguage} onValueChange={setSecondLanguage}>
+                            <SelectTrigger className="rounded-xl h-12 border-gray-200">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="en">English</SelectItem>
+                              <SelectItem value="es">Español</SelectItem>
+                              <SelectItem value="it">Italiano</SelectItem>
+                              <SelectItem value="fr">Français</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       <div>
                         <label className="text-sm font-semibold mb-3 block" style={{ color: "#333333" }}>Tamanho: {fontSize}px</label>
@@ -319,10 +348,10 @@ export default function BibleApp() {
                 <p className="text-sm text-gray-500">A Criação</p>
               </div>
 
-              {/* Dual Text Reader */}
-              <div className="flex-1 grid grid-cols-2 divide-x divide-gray-200">
-                {/* Portuguese */}
-                <div className="flex flex-col h-full">
+              {/* Dual Text Reader ou Single Text Reader */}
+              {portugueseOnly ? (
+                // Modo Somente Português - Tela Cheia
+                <div className="flex-1 flex flex-col h-full">
                   <div className="sticky top-0 px-6 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
                     <h3 className="font-semibold text-base" style={{ color: "#333333" }}>{ptTranslation}</h3>
                     <Button
@@ -334,51 +363,84 @@ export default function BibleApp() {
                       <Volume2 className="w-4 h-4 text-blue-500" />
                     </Button>
                   </div>
-                  <div className="flex-1 overflow-auto bg-white" style={{ padding: "20px 24px" }}>
-                    <p
-                      className="leading-relaxed max-w-2xl"
-                      style={{ 
-                        fontSize: `${fontSize}px`, 
-                        lineHeight: "2",
-                        color: "#333333",
-                        textAlign: "justify"
-                      }}
-                    >
-                      {bibleText.pt[ptTranslation as keyof typeof bibleText.pt]}
-                    </p>
+                  <div className="flex-1 overflow-auto bg-white" style={{ padding: "32px 48px" }}>
+                    <div className="max-w-4xl mx-auto">
+                      <p
+                        className="leading-relaxed"
+                        style={{ 
+                          fontSize: `${fontSize + 2}px`, 
+                          lineHeight: "2.2",
+                          color: "#333333",
+                          textAlign: "justify"
+                        }}
+                      >
+                        {bibleText.pt[ptTranslation as keyof typeof bibleText.pt]}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              ) : (
+                // Modo Dual - Duas Colunas
+                <div className="flex-1 grid grid-cols-2 divide-x divide-gray-200">
+                  {/* Portuguese */}
+                  <div className="flex flex-col h-full">
+                    <div className="sticky top-0 px-6 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
+                      <h3 className="font-semibold text-base" style={{ color: "#333333" }}>{ptTranslation}</h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playAudio("pt")}
+                        className="h-8 w-8 rounded-xl"
+                      >
+                        <Volume2 className="w-4 h-4 text-blue-500" />
+                      </Button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-white" style={{ padding: "20px 24px" }}>
+                      <p
+                        className="leading-relaxed max-w-2xl"
+                        style={{ 
+                          fontSize: `${fontSize}px`, 
+                          lineHeight: "2",
+                          color: "#333333",
+                          textAlign: "justify"
+                        }}
+                      >
+                        {bibleText.pt[ptTranslation as keyof typeof bibleText.pt]}
+                      </p>
+                    </div>
+                  </div>
 
-                {/* Second Language */}
-                <div className="flex flex-col h-full">
-                  <div className="sticky top-0 px-6 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
-                    <h3 className="font-semibold text-base" style={{ color: "#333333" }}>
-                      {secondLanguage.toUpperCase()}
-                    </h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => playAudio(secondLanguage)}
-                      className="h-8 w-8 rounded-xl"
-                    >
-                      <Volume2 className="w-4 h-4 text-blue-500" />
-                    </Button>
-                  </div>
-                  <div className="flex-1 overflow-auto bg-white" style={{ padding: "20px 24px" }}>
-                    <p
-                      className="leading-relaxed max-w-2xl"
-                      style={{ 
-                        fontSize: `${fontSize}px`, 
-                        lineHeight: "2",
-                        color: "#333333",
-                        textAlign: "justify"
-                      }}
-                    >
-                      {bibleText[secondLanguage as keyof typeof bibleText]}
-                    </p>
+                  {/* Second Language */}
+                  <div className="flex flex-col h-full">
+                    <div className="sticky top-0 px-6 py-4 flex items-center justify-between bg-gray-50 border-b border-gray-200">
+                      <h3 className="font-semibold text-base" style={{ color: "#333333" }}>
+                        {secondLanguage.toUpperCase()}
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playAudio(secondLanguage)}
+                        className="h-8 w-8 rounded-xl"
+                      >
+                        <Volume2 className="w-4 h-4 text-blue-500" />
+                      </Button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-white" style={{ padding: "20px 24px" }}>
+                      <p
+                        className="leading-relaxed max-w-2xl"
+                        style={{ 
+                          fontSize: `${fontSize}px`, 
+                          lineHeight: "2",
+                          color: "#333333",
+                          textAlign: "justify"
+                        }}
+                      >
+                        {getBibleText(secondLanguage)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
@@ -431,9 +493,7 @@ export default function BibleApp() {
                       textAlign: "justify"
                     }}
                   >
-                    {audioLanguage === "pt" 
-                      ? bibleText.pt[ptTranslation as keyof typeof bibleText.pt]
-                      : bibleText[audioLanguage as keyof typeof bibleText]}
+                    {getBibleText(audioLanguage)}
                   </p>
                 </div>
               </div>
